@@ -105,3 +105,4 @@ venv.bak/
 mnist_test.csv
 mnist_train.csv
 .vscode/settings.json
+outputs.txt

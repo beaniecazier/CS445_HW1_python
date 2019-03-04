@@ -1,34 +1,13 @@
+# Design Unit/Module: Multiclass Perceptron
+# File Name: main.py
+# Description:
+# Limitations: None?
+# System:
+# Author: Preston Cazier
+# Course: CS 445 Machine Learning (Winter 2019)
+# Assignment: Homework 1
+# Revision: 1.0 03/1/2019
 
-import myperceptron
-import pandas
-import numpy
-Conversation opened. 1 unread message.
-
-Skip to content
-Using Portland State University Mail with screen readers
-chanaar@pdx.edu
-
-Conversations
-
-Aaron Chan
-chanaar@pdx.edu
-
-Hangout with Aaron
-
-Start a video call with Aaron
-Improve result with search options such as sender, date, size and more.
-Using 27.02 GB
-Program Policies
-Powered by Google
-Last account activity: 2 days ago
-Details
-
-# main.py
-#
-# Aaron Chan
-# CS 445 Machine Learning (Winter 2019)
-# Homework 1
-#
 # Using the MNIST data sets to train and test perceptrons.
 # Assumes first column is target info and other columns are input data
 #
@@ -39,120 +18,71 @@ Details
 # - confusion matrix for test data set after training is completed
 # - perform the above with three different learning rates: 0.01, 0.1, 1
 
+import perceptron
+import pandas
+import numpy
 
+def sumup(matrix):
+    accuracy = 0.0
+    return accuracy
+
+# initialize hyperparameter variables
 EPOCH_MAX = 2
 INPUT_MAX = 255
-rate = 1
+LRATE = 1
+NUMCLASSES = 10
 
-TRAIN_FILE = "../mnist_train.csv"
-TEST_FILE = "../mnist_test.csv"
-# used to store outputs and evaluate the prediction of network
-output = [None]*10
-accuracy = pandas.DataFrame(0, index=range(
-    0, EPOCH_MAX+1), columns=['test_c', 'test_i', 'train_c', 'train_i'])
+# set up accuracy recording
+accuracy = pandas.DataFrame(0, index=range(0, EPOCH_MAX+1), columns=['test', 'train'])
 
 # set up confusion matrix: rows=actual, col=predicted
-confu = pandas.DataFrame(0, index=range(0, 10), columns=range(0, 10))
+confmat = pandas.DataFrame(0, index=range(0, 10), columns=range(0, 10))
 
-# Import data
+# load data
+TRAIN_FILE = "mnist_train.csv"
+TEST_FILE = "mnist_test.csv"
 train_data = pandas.read_csv(TRAIN_FILE, header=None)
 test_data = pandas.read_csv(TEST_FILE, header=None)
 
-# Preprocess data
-train_data.sample(frac=1)      # shuffle training data
 # Save targets as a separate dataframe/array
-train_target = train_data[0].values
-train_data.drop(columns=0)     # Remove column with target info
-train_data = train_data.values  # convert to numpy array
-# scale inputs between 0 and 1 by dividing by input max value
-train_data = numpy.divide(train_data, INPUT_MAX)
-
-test_target = test_data[0].values  # Save targets as a separate dataframe/array
-test_data.drop(columns=0)    # Remove column with target info
-test_data = test_data.values  # convert to numpy array
-test_data = numpy.divide(test_data, INPUT_MAX)
+target_train = train_data[0].values
+train_data[:, 0] = INPUT_MAX
+target_test = train_data[0].values
+test_data[:, 0] = INPUT_MAX
 
 input_size = len(train_data[0])  # how many inputs are there
 
-# new network of perceptrons
-net = [myperceptron.Perceptron(input_size) for i in range(0, 10)]
+# initialize perceptron network
+network = perceptron.Perceptron(lrate=LRATE, num_inputs=input_size,
+                     num_outputs=NUMCLASSES)
 
-# Epoch 0 accuracy test for train data
-for i in range(0, len(train_data)):
-    for j in range(0, 10):
-        output[j] = net[j].evaluate(train_data[i])
+# randomize training set
+train_data.sample(frac=1)      # shuffle training data
 
-    if(train_target[i] == output.index(max(output))):
-        accuracy['train_c'][0] += 1
-    else:
-        accuracy['train_i'][0] += 1
+# Preprocess data
+train_data = numpy.divide(train_data, INPUT_MAX)
+test_data = numpy.divide(train_data, INPUT_MAX)
 
-# Epoch 0 accuracy test for test data
-for i in range(0, len(test_data)):
-    for j in range(0, 10):
-        output[j] = net[j].evaluate(test_data[i])
+# find initial accuracy
+confmat['test'] = network.accuracy(network.predict(test_data))
+accuracy['test'][0] = sumup(confmat['test'])
+confmat['train'] = network.accuracy(network.predict(train_data))
+accuracy['train'][0] = sumup(['train'])
 
-    if(output.index(max(output)) == test_target[i]):
-        accuracy['test_c'][0] += 1
-    else:
-        accuracy['test_i'][0] += 1
-
-# Start training and record accuracy after each epoch
-for e in range(1, EPOCH_MAX+1):
-
-    # Loop through each row of training data
-    for x in range(0, len(train_data)):
-        # Loop through each perceptron
-        for y in range(0, 10):
-            output[y] = net[y].evaluate(train_data[x])
-
-        # Evaluate outputs. Greatest value is prediction and equals 1. Others are 0
-        prediction = output.index(max(output))
-        for i in range(0, 10):
-            if(i == prediction):
-                output[i] = 1
-            else:
-                output[i] = 0
-
-        # Update weights based off prediction
-        for y in range(0, 10):
-            if(y == train_target[x]):
-                net[y].updateWeights(1, output[y], train_data[x], rate)
-            else:
-                net[y].updateWeights(0, output[y], train_data[x], rate)
-
-    # Evaluate and test accuracy at each epoch with training data
-    for i in range(0, len(train_data)):
-        for j in range(0, 10):
-            output[j] = net[j].evaluate(train_data[i])
-
-        if(output.index(max(output)) == train_target[i]):
-            accuracy['train_c'][e] += 1
-        else:
-            accuracy['train_i'][e] += 1
-
-    # Evaluate and test accuracy at each epoch with test data
-    for i in range(0, len(test_data)):
-        for j in range(0, 10):
-            output[j] = net[j].evaluate(test_data[i])
-
-        if(output.index(max(output)) == test_target[i]):
-            accuracy['test_c'][e] += 1
-        else:
-            accuracy['test_i'][e] += 1
-
-# Finished training for this learning rate. Construct confusion matrix
-for i in range(0, len(test_data)):
-    for j in range(0, 10):
-        output[j] = net[j].evaluate(test_data[i])
-
-    # Confusion matrix --> confu[actual][prediction]
-    confu[test_target[i]][output.index(max(output))] += 1
+# do epochs
+# 1.train on each data point one at a time
+# 2.find accuracy for epoch
+# make confusion matrix
+for i in range(1, EPOCH_MAX+1):
+    for j in range(0, len(train_data)):
+        network.train(target=target_train[i], inputs=train_data[i])
+    confmat['test'] = network.accuracy(network.predict(test_data))
+    accuracy['test'] = sumup(confmat['test'])
+    confmat['train'] = network.accuracy(network.predict(train_data))
+    accuracy['train'][i] = sumup(confmat['train'])
 
 # Output accuracy and confusion matrix to CSV file
-accuracy_title = 'accuracy_rate='+str(rate)+'.csv'
-cmatrix_title = 'confusionmatrix_rate='+str(rate)+'.csv'
-accuracy.to_csv(accuracy_title)
-confu.to_csv(cmatrix_title)
-main.py
-Displaying myperceptron.py.
+accuracy_filepath = 'accuracy_rate='+str(LRATE)+'.csv'
+confmat_filepath = 'confusionmatrix_rate='+str(LRATE)+'.csv'
+accuracy.to_csv(accuracy_filepath)
+confmat.to_csv(confmat_filepath)

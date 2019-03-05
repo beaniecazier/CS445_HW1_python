@@ -25,7 +25,7 @@ import numpy as np
 # initialize hyperparameter variables
 EPOCH_MAX = 50
 INPUT_MAX = 255
-LRATE = 1
+LRATE = 0.01
 NUMCLASSES = 10
 VERBOSE = False
 TRAIN_FILE = "mnist_train.csv"

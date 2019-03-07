@@ -1,29 +1,20 @@
 # Design Unit/Module: Multiclass Perceptron
 # File Name: main.py
-# Description:
+# Description: Use the MNIST data set to train and test a network of 10 perceptrons.
+# Assumptions: First entry in each row contains target class
 # Limitations: None?
-# System:
+# System: any(Python)
 # Author: Preston Cazier
 # Course: CS 445 Machine Learning (Winter 2019)
 # Assignment: Homework 1
-# Revision: 1.0 03/1/2019
-
-# Using the MNIST data sets to train and test perceptrons.
-# Assumes first column is target info and other columns are input data
-#
-# This assignment requires the following:
-# - accuracy based off training and test data sets
-# - accuracy before training and after each epoch
-# - perceptron with greatest output is treated to be the prediction for network
-# - confusion matrix for test data set after training is completed
-# - perform the above with three different learning rates: 0.01, 0.1, 1
+# Revision: 1.2 03/7/2019
 
 import perceptron
 import pandas as pd
 import numpy as np
 
 # initialize hyperparameter variables
-EPOCH_MAX = 50
+EPOCHS = 50
 INPUT_MAX = 255
 LRATE = 0.01
 NUMCLASSES = 10
@@ -32,7 +23,7 @@ TRAIN_FILE = "mnist_train.csv"
 TEST_FILE = "mnist_test.csv"
 
 # set up accuracy recording
-accuracy = pd.DataFrame(0.0, index=range(0, EPOCH_MAX+1), columns=['test', 'train'])
+accuracy = pd.DataFrame(0.0, index=range(0, EPOCHS+1), columns=['test', 'train'])
 
 # set up confusion matrix: rows=actual, col=predicted
 confmat_train = pd.DataFrame(0, index=range(0, 10), columns=range(0, 10))
@@ -48,23 +39,23 @@ if VERBOSE:
     print('now randomizing the training data and separating out the targets')
 
 # Save targets as a separate dataframe/array
-target_train = train_data[:, 0]
+train_targets = train_data[:, 0]
 train_data = np.array(train_data)
 train_data[:, 0] = INPUT_MAX
 if VERBOSE:
     print('training data targets:')
-    print(target_train)
+    print(train_targets)
     print('training data:')
     print(train_data)
     print('the shape of this set of data is:')
     print(train_data.shape)
     print('now separating out the targets from the testing data')
-target_test = test_data[:, 0]
+test_targets = test_data[:, 0]
 test_data = np.array(test_data)
 test_data[:, 0] = INPUT_MAX
 if VERBOSE:
     print('testing data targets:')
-    print(target_test)
+    print(test_targets)
     print('testing data:')
     print(test_data)
     print('the shape of this set of data is:')
@@ -90,24 +81,24 @@ network = perceptron.Perceptron(lrate=LRATE, num_inputs=input_size, num_outputs=
 # find initial accuracy
 if VERBOSE:
     print('finding the initial accuracy of the testing and training data')
-accuracy['test'][0] = network.accuracy(test_data, target_test)
-accuracy['train'][0] = network.accuracy(train_data, target_train)
+accuracy['test'][0] = network.accuracy(test_data, test_targets)
+accuracy['train'][0] = network.accuracy(train_data, train_targets)
 
 # do epochs
 # 1.train on each data point one at a time
 # 2.find accuracy for epoch
 # make confusion matrix
-for i in range(1, EPOCH_MAX+1):
+for i in range(1, EPOCHS+1):
     if not VERBOSE:
         print('starting epoch ', i)
     for j in range(0, len(train_data)):
-        network.train(target=target_train[j], inputs=train_data[j])
+        network.train(target=train_targets[j], inputs=train_data[j])
     print('finding accuracy')
-    accuracy['test'][i] = network.accuracy(test_data, target_test)
-    accuracy['train'][i] = network.accuracy(train_data, target_train)
+    accuracy['test'][i] = network.accuracy(test_data, test_targets)
+    accuracy['train'][i] = network.accuracy(train_data, train_targets)
 
-confmat_test = network.confusionmatrix(network.predict(test_data), target_test)
-confmat_train = network.confusionmatrix(network.predict(train_data), target_train)
+confmat_test = network.confusionmatrix(network.predict(test_data), test_targets)
+confmat_train = network.confusionmatrix(network.predict(train_data), train_targets)
 
 # Output accuracy and confusion matrix to CSV file
 accuracy['test'].to_csv('accuracy_rate_test'+str(LRATE)+'.csv')
